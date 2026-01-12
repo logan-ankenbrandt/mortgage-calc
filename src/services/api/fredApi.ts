@@ -58,7 +58,7 @@ class FredApiClient {
    * Set API key
    */
   setApiKey(apiKey: string): void {
-    this.apiKey = apiKey
+    this.apiKey = apiKey.trim()
   }
 
   /**
@@ -167,7 +167,7 @@ class FredApiClient {
 // Create singleton instance
 // API key can be set via environment variable or later via setApiKey()
 export const fredApi = new FredApiClient(
-  import.meta.env.VITE_FRED_API_KEY || ''
+  (import.meta.env.VITE_FRED_API_KEY || '').trim()
 )
 
 // Export class for testing or custom instances
