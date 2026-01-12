@@ -142,14 +142,15 @@ export async function fetchHomePriceIndex(): Promise<HomePriceIndexSeries> {
 
     // Use fallback data for any series that failed to fetch
     const fallback = FALLBACK_HPI
+    const fallbackMetro = fallback.metro!
     const data: HomePriceIndexSeries = {
       texas: texas ?? fallback.texas,
       national: national ?? fallback.national,
       metro: {
-        houston: houston ?? fallback.metro.houston,
-        dallas: dallas ?? fallback.metro.dallas,
-        austin: austin ?? fallback.metro.austin,
-        sanAntonio: sanAntonio ?? fallback.metro.sanAntonio,
+        houston: houston ?? fallbackMetro.houston,
+        dallas: dallas ?? fallbackMetro.dallas,
+        austin: austin ?? fallbackMetro.austin,
+        sanAntonio: sanAntonio ?? fallbackMetro.sanAntonio,
       },
     }
 
