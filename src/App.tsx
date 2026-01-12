@@ -284,17 +284,20 @@ function MarketPage() {
   const [newsCategory, setNewsCategory] = useState<'all' | 'rates' | 'fed' | 'market' | 'general'>('all')
   const [rateHistory, setRateHistory] = useState<{ date: string; rate30: number; rate15: number }[]>([])
   const [rateHistoryLoading, setRateHistoryLoading] = useState(true)
+  const [rateHistoryError, setRateHistoryError] = useState(false)
 
   // Fetch rate history on mount
   useEffect(() => {
     let mounted = true
     async function fetchHistory() {
       setRateHistoryLoading(true)
+      setRateHistoryError(false)
       try {
         const history = await getRateHistory(12)
         if (mounted) setRateHistory(history)
       } catch (e) {
         console.error('Failed to fetch rate history:', e)
+        if (mounted) setRateHistoryError(true)
       } finally {
         if (mounted) setRateHistoryLoading(false)
       }
@@ -309,9 +312,13 @@ function MarketPage() {
     await Promise.all([refreshRates(), refreshIndicators(), refreshHPI(), refreshNews()])
     // Also refresh rate history
     setRateHistoryLoading(true)
+    setRateHistoryError(false)
     try {
       const history = await getRateHistory(12)
       setRateHistory(history)
+    } catch (e) {
+      console.error('Failed to refresh rate history:', e)
+      setRateHistoryError(true)
     } finally {
       setRateHistoryLoading(false)
     }
@@ -414,71 +421,73 @@ function MarketPage() {
       </Card>
 
       {/* Rate History Chart */}
-      {(rateHistory.length > 0 || rateHistoryLoading) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>12-Month Rate Trend</CardTitle>
-            <CardDescription>
-              Historical mortgage rate movement
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {rateHistoryLoading ? (
-              <Skeleton className="h-[250px]" />
-            ) : chartData.length > 0 ? (
-              <div className="h-[250px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis
-                      dataKey="date"
-                      className="text-xs"
-                      tick={{ fontSize: 11 }}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis
-                      className="text-xs"
-                      tick={{ fontSize: 11 }}
-                      tickFormatter={(v) => `${v}%`}
-                      domain={['dataMin - 0.5', 'dataMax + 0.5']}
-                    />
-                    <Tooltip
-                      formatter={(value: number | undefined) => value !== undefined ? [`${value.toFixed(2)}%`, ''] : ['', '']}
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--background))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                      }}
-                    />
-                    <Legend />
-                    <Area
-                      type="monotone"
-                      dataKey="30-Year"
-                      stroke="hsl(var(--chart-1))"
-                      fill="hsl(var(--chart-1))"
-                      fillOpacity={0.3}
-                      strokeWidth={2}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="15-Year"
-                      stroke="hsl(var(--chart-2))"
-                      fill="hsl(var(--chart-2))"
-                      fillOpacity={0.2}
-                      strokeWidth={2}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-center py-8">
-                Rate history unavailable. Configure FRED API key for historical data.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>12-Month Rate Trend</CardTitle>
+          <CardDescription>
+            Historical mortgage rate movement
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {rateHistoryLoading ? (
+            <Skeleton className="h-[250px]" />
+          ) : rateHistoryError ? (
+            <p className="text-muted-foreground text-center py-8">
+              Unable to load rate history. Check API configuration.
+            </p>
+          ) : chartData.length > 0 ? (
+            <div className="h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis
+                    dataKey="date"
+                    className="text-xs"
+                    tick={{ fontSize: 11 }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    className="text-xs"
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={(v) => `${v}%`}
+                    domain={['dataMin - 0.5', 'dataMax + 0.5']}
+                  />
+                  <Tooltip
+                    formatter={(value: number | undefined) => value !== undefined ? [`${value.toFixed(2)}%`, ''] : ['', '']}
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--background))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                    }}
+                  />
+                  <Legend />
+                  <Area
+                    type="monotone"
+                    dataKey="30-Year"
+                    stroke="hsl(var(--chart-1))"
+                    fill="hsl(var(--chart-1))"
+                    fillOpacity={0.3}
+                    strokeWidth={2}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="15-Year"
+                    stroke="hsl(var(--chart-2))"
+                    fill="hsl(var(--chart-2))"
+                    fillOpacity={0.2}
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-center py-8">
+              No rate history data available.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Home Price Index */}
       <Card>

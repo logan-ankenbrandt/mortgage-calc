@@ -122,39 +122,34 @@ export async function getRateHistory(
   months: number = 12
 ): Promise<{ date: string; rate30: number; rate15: number }[]> {
   if (!fredApi.isConfigured()) {
-    return []
+    throw new Error('FRED API not configured')
   }
 
   const startDate = new Date()
   startDate.setMonth(startDate.getMonth() - months)
   const startDateStr = startDate.toISOString().split('T')[0]
 
-  try {
-    const [rate30History, rate15History] = await Promise.all([
-      fredApi.getSeriesObservations(FRED_SERIES.MORTGAGE_30_YEAR, {
-        observationStart: startDateStr,
-        sortOrder: 'asc',
-      }),
-      fredApi.getSeriesObservations(FRED_SERIES.MORTGAGE_15_YEAR, {
-        observationStart: startDateStr,
-        sortOrder: 'asc',
-      }),
-    ])
+  const [rate30History, rate15History] = await Promise.all([
+    fredApi.getSeriesObservations(FRED_SERIES.MORTGAGE_30_YEAR, {
+      observationStart: startDateStr,
+      sortOrder: 'asc',
+    }),
+    fredApi.getSeriesObservations(FRED_SERIES.MORTGAGE_15_YEAR, {
+      observationStart: startDateStr,
+      sortOrder: 'asc',
+    }),
+  ])
 
-    // Merge the two series by date
-    const rate15Map = new Map(
-      rate15History.observations.map((o) => [o.date, parseFloat(o.value)])
-    )
+  // Merge the two series by date
+  const rate15Map = new Map(
+    rate15History.observations.map((o) => [o.date, parseFloat(o.value)])
+  )
 
-    return rate30History.observations
-      .map((o) => ({
-        date: o.date,
-        rate30: parseFloat(o.value),
-        rate15: rate15Map.get(o.date) ?? 0,
-      }))
-      .filter((r) => !isNaN(r.rate30) && r.rate15 > 0)
-  } catch (error) {
-    console.error('Error fetching rate history:', error)
-    return []
-  }
+  return rate30History.observations
+    .map((o) => ({
+      date: o.date,
+      rate30: parseFloat(o.value),
+      rate15: rate15Map.get(o.date) ?? 0,
+    }))
+    .filter((r) => !isNaN(r.rate30) && r.rate15 > 0)
 }
