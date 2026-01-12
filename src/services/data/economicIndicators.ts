@@ -28,7 +28,12 @@ const FALLBACK_INDICATORS: EconomicIndicators = {
 /**
  * Fetch economic indicators from FRED API
  */
-export async function fetchEconomicIndicators(): Promise<EconomicIndicators> {
+export async function fetchEconomicIndicators(forceRefresh = false): Promise<EconomicIndicators> {
+  // Clear cache if force refreshing
+  if (forceRefresh) {
+    cacheManager.clear(CACHE_KEYS.ECONOMIC_INDICATORS)
+  }
+
   // Check cache first
   const cached = cacheManager.get<EconomicIndicators>(CACHE_KEYS.ECONOMIC_INDICATORS)
   if (cached && !cacheManager.isExpired(CACHE_KEYS.ECONOMIC_INDICATORS)) {

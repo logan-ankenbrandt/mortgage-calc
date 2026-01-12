@@ -116,7 +116,12 @@ async function parseHPIFromFred(
 /**
  * Fetch all HPI data from FRED API
  */
-export async function fetchHomePriceIndex(): Promise<HomePriceIndexSeries> {
+export async function fetchHomePriceIndex(forceRefresh = false): Promise<HomePriceIndexSeries> {
+  // Clear cache if force refreshing
+  if (forceRefresh) {
+    cacheManager.clear(CACHE_KEYS.HOME_PRICE_INDEX)
+  }
+
   // Check cache first
   const cached = cacheManager.get<HomePriceIndexSeries>(CACHE_KEYS.HOME_PRICE_INDEX)
   if (cached && !cacheManager.isExpired(CACHE_KEYS.HOME_PRICE_INDEX)) {

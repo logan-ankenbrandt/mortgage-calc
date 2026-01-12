@@ -15,7 +15,12 @@ const FALLBACK_RATES: MortgageRateData = {
 /**
  * Fetch current mortgage rates from FRED API
  */
-export async function fetchMortgageRates(): Promise<MortgageRateData> {
+export async function fetchMortgageRates(forceRefresh = false): Promise<MortgageRateData> {
+  // Clear cache if force refreshing
+  if (forceRefresh) {
+    cacheManager.clear(CACHE_KEYS.MORTGAGE_RATES)
+  }
+
   // Check cache first
   const cached = cacheManager.get<MortgageRateData>(CACHE_KEYS.MORTGAGE_RATES)
   if (cached && !cacheManager.isExpired(CACHE_KEYS.MORTGAGE_RATES)) {

@@ -35,16 +35,18 @@ function parseRSS(xml: string, source: string): NewsItem[] {
         item.querySelector('content\\:encoded')?.textContent?.trim() ??
         ''
 
-      // Extract summary (first 200 chars, strip HTML)
-      const summary = description
+      // Clean full description (strip HTML, decode entities)
+      const cleanedDescription = description
         .replace(/<[^>]*>/g, '')
         .replace(/&nbsp;/g, ' ')
         .replace(/&amp;/g, '&')
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
         .replace(/&quot;/g, '"')
-        .substring(0, 200)
         .trim()
+
+      // Extract summary (first 200 chars)
+      const summary = cleanedDescription.substring(0, 200)
 
       // Categorize based on title/content
       const category = categorizeNewsItem(title, summary)
@@ -53,7 +55,8 @@ function parseRSS(xml: string, source: string): NewsItem[] {
         newsItems.push({
           id: `${source}-${index}-${Date.now()}`,
           title,
-          summary: summary + (summary.length >= 200 ? '...' : ''),
+          summary: summary + (cleanedDescription.length > 200 ? '...' : ''),
+          fullDescription: cleanedDescription.length > 200 ? cleanedDescription : undefined,
           link,
           pubDate: pubDate || new Date().toISOString(),
           source,
@@ -108,7 +111,12 @@ async function fetchRSSFeed(url: string, source: string): Promise<NewsItem[]> {
 /**
  * Fetch all news feeds and aggregate
  */
-export async function fetchMarketNews(): Promise<MarketNewsFeed> {
+export async function fetchMarketNews(forceRefresh = false): Promise<MarketNewsFeed> {
+  // Clear cache if force refreshing
+  if (forceRefresh) {
+    cacheManager.clear(CACHE_KEYS.NEWS_FEEDS)
+  }
+
   // Check cache first
   const cached = cacheManager.get<MarketNewsFeed>(CACHE_KEYS.NEWS_FEEDS)
   if (cached && !cacheManager.isExpired(CACHE_KEYS.NEWS_FEEDS)) {

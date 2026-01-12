@@ -20,6 +20,14 @@ import { TooltipProvider } from './components/ui/tooltip'
 import { Badge } from './components/ui/badge'
 import { Button } from './components/ui/button'
 import { Skeleton } from './components/ui/skeleton'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from './components/ui/dialog'
+import type { NewsItem } from './types/market-data'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card'
 import { IncomeSection } from './features/income/IncomeSection'
 import { PropertySection } from './features/property/PropertySection'
@@ -282,6 +290,7 @@ function MarketPage() {
   const { news, isLoading: newsLoading, refresh: refreshNews } = useMarketNews()
 
   const [newsCategory, setNewsCategory] = useState<'all' | 'rates' | 'fed' | 'market' | 'general'>('all')
+  const [selectedNewsItem, setSelectedNewsItem] = useState<NewsItem | null>(null)
   const [rateHistory, setRateHistory] = useState<{ date: string; rate30: number; rate15: number }[]>([])
   const [rateHistoryLoading, setRateHistoryLoading] = useState(true)
   const [rateHistoryError, setRateHistoryError] = useState(false)
@@ -709,12 +718,10 @@ function MarketPage() {
           ) : filteredNews.length > 0 ? (
             <div className="space-y-4">
               {filteredNews.slice(0, 10).map((item) => (
-                <a
+                <div
                   key={item.id}
-                  href={item.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block p-4 rounded-lg border hover:border-primary/50 hover:bg-muted/50 transition-colors"
+                  onClick={() => setSelectedNewsItem(item)}
+                  className="block p-4 rounded-lg border hover:border-primary/50 hover:bg-muted/50 transition-colors cursor-pointer"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -738,7 +745,7 @@ function MarketPage() {
                     </div>
                     <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
                   </div>
-                </a>
+                </div>
               ))}
               {filteredNews.length > 10 && (
                 <p className="text-xs text-muted-foreground text-center pt-2">
@@ -757,6 +764,51 @@ function MarketPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* News Article Dialog */}
+      <Dialog open={!!selectedNewsItem} onOpenChange={(open) => !open && setSelectedNewsItem(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          {selectedNewsItem && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="outline" className="text-xs">
+                    {selectedNewsItem.category}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {selectedNewsItem.source}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    • {formatNewsDate(selectedNewsItem.pubDate)}
+                  </span>
+                </div>
+                <DialogTitle className="text-lg leading-tight">
+                  {selectedNewsItem.title}
+                </DialogTitle>
+                <DialogDescription className="sr-only">
+                  Article from {selectedNewsItem.source}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-4 space-y-4">
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  {selectedNewsItem.fullDescription || selectedNewsItem.summary}
+                </p>
+                <div className="pt-4 border-t">
+                  <a
+                    href={selectedNewsItem.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                  >
+                    Read full article at {selectedNewsItem.source}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

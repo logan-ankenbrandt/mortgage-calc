@@ -107,6 +107,7 @@ export interface NewsItem {
   id: string
   title: string
   summary: string
+  fullDescription?: string // Full content when available (longer than summary)
   link: string
   pubDate: string
   source: string

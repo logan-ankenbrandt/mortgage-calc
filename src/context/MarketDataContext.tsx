@@ -81,12 +81,12 @@ const MarketDataContext = createContext<MarketDataContextValue | null>(null)
 export function MarketDataProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(marketDataReducer, initialState)
 
-  // Fetch mortgage rates
+  // Fetch mortgage rates (forceRefresh bypasses cache)
   const refreshRates = useCallback(async () => {
     dispatch({ type: 'SET_RATES_STATUS', payload: { state: 'loading' } })
 
     try {
-      const rates = await fetchMortgageRates()
+      const rates = await fetchMortgageRates(true)
       dispatch({ type: 'SET_RATES', payload: rates })
       dispatch({
         type: 'SET_RATES_STATUS',
@@ -104,12 +104,12 @@ export function MarketDataProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Fetch economic indicators
+  // Fetch economic indicators (forceRefresh bypasses cache)
   const refreshIndicators = useCallback(async () => {
     dispatch({ type: 'SET_INDICATORS_STATUS', payload: { state: 'loading' } })
 
     try {
-      const indicators = await fetchEconomicIndicators()
+      const indicators = await fetchEconomicIndicators(true)
       dispatch({ type: 'SET_INDICATORS', payload: indicators })
       dispatch({
         type: 'SET_INDICATORS_STATUS',
@@ -127,12 +127,12 @@ export function MarketDataProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Fetch home price index
+  // Fetch home price index (forceRefresh bypasses cache)
   const refreshHPI = useCallback(async () => {
     dispatch({ type: 'SET_HPI_STATUS', payload: { state: 'loading' } })
 
     try {
-      const hpi = await fetchHomePriceIndex()
+      const hpi = await fetchHomePriceIndex(true)
       dispatch({ type: 'SET_HPI', payload: hpi })
       dispatch({
         type: 'SET_HPI_STATUS',
@@ -150,12 +150,12 @@ export function MarketDataProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Fetch market news
+  // Fetch market news (forceRefresh bypasses cache)
   const refreshNews = useCallback(async () => {
     dispatch({ type: 'SET_NEWS_STATUS', payload: { state: 'loading' } })
 
     try {
-      const news = await fetchMarketNews()
+      const news = await fetchMarketNews(true)
       dispatch({ type: 'SET_NEWS', payload: news })
       dispatch({
         type: 'SET_NEWS_STATUS',
