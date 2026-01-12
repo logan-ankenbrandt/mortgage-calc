@@ -2,11 +2,16 @@ import { useState, useEffect } from 'react'
 import { CalculatorProvider, useCalculatorContext } from './context/CalculatorContext'
 import { useCalculator } from './hooks/useCalculator'
 import { MarketDataProvider, useMortgageRates, useEconomicIndicators, useHomePriceIndex, useMarketNews } from './context/MarketDataContext'
+import { getFedRateContext } from './services/data/economicIndicators'
+import { getMetroComparison } from './services/data/homePriceIndex'
 import { formatNewsDate } from './services/data/newsService'
 import { getRateHistory } from './services/data/mortgageRates'
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -38,6 +43,7 @@ import { AnalysisPage } from './features/analysis/AnalysisPage'
 import { SettingsPage } from './features/settings/SettingsPage'
 import { RefreshCw, TrendingUp, TrendingDown, DollarSign, Percent, Building2, PiggyBank, Newspaper, Home, ExternalLink } from 'lucide-react'
 import { formatCurrency, formatPercent } from './utils/formatters'
+import { calculateDTI, calculatePMI } from './utils/calculations'
 
 // Dashboard with real data
 function Dashboard() {
@@ -122,6 +128,11 @@ function Dashboard() {
                       `${indicators?.fedFundsRate.current.toFixed(2) ?? '--'}%`
                     )}
                   </p>
+                  {indicators && (
+                    <p className="text-xs text-muted-foreground mt-1 max-w-[200px] mx-auto">
+                      {getFedRateContext(indicators)}
+                    </p>
+                  )}
                 </div>
               </>
             ) : (
@@ -276,6 +287,90 @@ function Dashboard() {
         </CardContent>
       </Card>
 
+      {/* Readiness Score */}
+      {(() => {
+        // Calculate DTI using best scenario's housing costs
+        const grossMonthlyIncome = totalIncome
+        const dtiResult = calculateDTI(grossMonthlyIncome, bestScenario.totalMonthlyHousing)
+        const dti = dtiResult.backEndRatio
+        const savingsProgress = progressTo20
+        const hasAffordableScenario = affordableScenarios.length > 0
+        // Calculate PMI based on current savings
+        const loanAmount = state.property.price - state.savings.current
+        const pmiResult = calculatePMI(loanAmount, state.property.price)
+        const pmiRequired = pmiResult.required
+
+        // Calculate readiness level
+        let readinessLevel: 'not-ready' | 'getting-close' | 'ready' | 'strong'
+        let readinessLabel: string
+        let readinessDescription: string
+
+        if (dti > 43 || !hasAffordableScenario) {
+          readinessLevel = 'not-ready'
+          readinessLabel = 'Not Ready'
+          readinessDescription = dti > 43 ? 'DTI exceeds 43% limit' : 'No affordable scenario available'
+        } else if (dti > 36 || savingsProgress < 50) {
+          readinessLevel = 'getting-close'
+          readinessLabel = 'Getting Close'
+          readinessDescription = dti > 36 ? 'DTI above preferred 36%' : 'Savings below 50% of down payment'
+        } else if (savingsProgress >= 100 && !pmiRequired) {
+          readinessLevel = 'strong'
+          readinessLabel = 'Strong Position'
+          readinessDescription = '20% down available, no PMI required'
+        } else {
+          readinessLevel = 'ready'
+          readinessLabel = 'Ready'
+          readinessDescription = 'DTI healthy, scenario affordable'
+        }
+
+        const borderColor = readinessLevel === 'strong' || readinessLevel === 'ready'
+          ? 'border-green-500/30'
+          : readinessLevel === 'getting-close'
+            ? 'border-amber-500/30'
+            : 'border-red-500/30'
+        const bgColor = readinessLevel === 'strong' || readinessLevel === 'ready'
+          ? 'bg-green-500/5'
+          : readinessLevel === 'getting-close'
+            ? 'bg-amber-500/5'
+            : 'bg-red-500/5'
+
+        return (
+          <Card className={`${borderColor} ${bgColor}`}>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Readiness Score</CardTitle>
+                <Badge variant={readinessLevel === 'strong' || readinessLevel === 'ready' ? 'success' : readinessLevel === 'getting-close' ? 'warning' : 'destructive'}>
+                  {readinessLabel}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-3">{readinessDescription}</p>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-xs text-muted-foreground">DTI</p>
+                  <p className={`font-semibold ${dti <= 36 ? 'text-green-600 dark:text-green-400' : dti <= 43 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {dti.toFixed(0)}%
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Savings</p>
+                  <p className={`font-semibold ${savingsProgress >= 100 ? 'text-green-600 dark:text-green-400' : savingsProgress >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {savingsProgress.toFixed(0)}%
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">PMI</p>
+                  <p className={`font-semibold ${!pmiRequired ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                    {pmiRequired ? 'Required' : 'None'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })()}
+
       <p className="text-sm text-muted-foreground">
         Navigate to specific sections using the sidebar to configure your mortgage calculations.
       </p>
@@ -284,6 +379,7 @@ function Dashboard() {
 }
 
 function MarketPage() {
+  const { state } = useCalculatorContext()
   const { rates, isLoading: ratesLoading, refresh: refreshRates } = useMortgageRates()
   const { indicators, isLoading: indicatorsLoading, refresh: refreshIndicators } = useEconomicIndicators()
   const { hpi, isLoading: hpiLoading, refresh: refreshHPI } = useHomePriceIndex()
@@ -379,11 +475,55 @@ function MarketPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Mortgage Rates</CardTitle>
-            {rates && (
-              <Badge variant={rates.source === 'fred' ? 'default' : 'secondary'}>
-                {rates.source === 'fred' ? 'FRED API' : 'Fallback Data'}
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Rate Lock Urgency Indicator */}
+              {rates && rateHistory.length > 0 && (() => {
+                const currentRate = rates.rate30Year
+                const historicalRates = rateHistory.map(r => r.rate30)
+                const min12Mo = Math.min(...historicalRates)
+                const max12Mo = Math.max(...historicalRates)
+                const range = max12Mo - min12Mo
+                const position = range > 0 ? (currentRate - min12Mo) / range : 0.5
+
+                // Check trend (last 3 data points)
+                const recentRates = rateHistory.slice(-3).map(r => r.rate30)
+                const isTrendingDown = recentRates.length >= 2 && recentRates[recentRates.length - 1]! < recentRates[0]!
+                const isTrendingUp = recentRates.length >= 2 && recentRates[recentRates.length - 1]! > recentRates[0]!
+
+                let label: string
+                let variant: 'default' | 'secondary' | 'success' | 'warning' | 'destructive'
+
+                if (position <= 0.25) {
+                  label = 'Favorable'
+                  variant = 'success'
+                } else if (position >= 0.75) {
+                  label = 'Elevated'
+                  variant = 'warning'
+                } else if (isTrendingDown) {
+                  label = 'Improving'
+                  variant = 'success'
+                } else if (isTrendingUp) {
+                  label = 'Rising'
+                  variant = 'warning'
+                } else {
+                  label = 'Stable'
+                  variant = 'secondary'
+                }
+
+                return (
+                  <Badge variant={variant} className="flex items-center gap-1">
+                    {isTrendingDown && <TrendingDown className="h-3 w-3" />}
+                    {isTrendingUp && <TrendingUp className="h-3 w-3" />}
+                    {label}
+                  </Badge>
+                )
+              })()}
+              {rates && (
+                <Badge variant={rates.source === 'fred' ? 'default' : 'secondary'}>
+                  {rates.source === 'fred' ? 'FRED API' : 'Fallback Data'}
+                </Badge>
+              )}
+            </div>
           </div>
           <CardDescription>
             Weekly average rates from Freddie Mac Primary Mortgage Market Survey
@@ -428,6 +568,60 @@ function MarketPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Rate Spread Analysis */}
+      {rates && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Rate Spread Analysis</CardTitle>
+            <CardDescription>
+              Compare 30-year vs 15-year for your loan
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const spread = rates.rate30Year - rates.rate15Year
+              const loanAmount = state.property.price * 0.8 // Assuming 20% down
+              const monthlyRate30 = rates.rate30Year / 100 / 12
+              const monthlyRate15 = rates.rate15Year / 100 / 12
+
+              // Calculate total interest for 30-year
+              const payment30 = loanAmount * (monthlyRate30 * Math.pow(1 + monthlyRate30, 360)) / (Math.pow(1 + monthlyRate30, 360) - 1)
+              const totalInterest30 = (payment30 * 360) - loanAmount
+
+              // Calculate total interest for 15-year
+              const payment15 = loanAmount * (monthlyRate15 * Math.pow(1 + monthlyRate15, 180)) / (Math.pow(1 + monthlyRate15, 180) - 1)
+              const totalInterest15 = (payment15 * 180) - loanAmount
+
+              const interestSavings = totalInterest30 - totalInterest15
+              const monthlyDifference = payment15 - payment30
+
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Rate Spread</p>
+                      <p className="text-xl font-bold">{spread.toFixed(2)}%</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">15-year saves</p>
+                      <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                        {formatCurrency(interestSavings)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    <p>Based on {formatCurrency(loanAmount)} loan (80% of {formatCurrency(state.property.price)})</p>
+                    <p className="mt-1">
+                      15-year payment: {formatCurrency(payment15)}/mo (+{formatCurrency(monthlyDifference)} vs 30-year)
+                    </p>
+                  </div>
+                </div>
+              )
+            })()}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Rate History Chart */}
       <Card>
@@ -536,7 +730,14 @@ function MarketPage() {
                         {hpi.texas.yearOverYearChange >= 0 ? '+' : ''}{hpi.texas.yearOverYearChange.toFixed(1)}%
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Year-over-year change</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      YoY change
+                      {hpi.texas.fiveYearChange !== null && (
+                        <span className="ml-2 text-muted-foreground/70">
+                          · 5yr: {hpi.texas.fiveYearChange >= 0 ? '+' : ''}{hpi.texas.fiveYearChange.toFixed(0)}%
+                        </span>
+                      )}
+                    </p>
                   </div>
                 )}
                 {hpi.national && (
@@ -549,7 +750,14 @@ function MarketPage() {
                         {hpi.national.yearOverYearChange >= 0 ? '+' : ''}{hpi.national.yearOverYearChange.toFixed(1)}%
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">Year-over-year change</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      YoY change
+                      {hpi.national.fiveYearChange !== null && (
+                        <span className="ml-2 text-muted-foreground/70">
+                          · 5yr: {hpi.national.fiveYearChange >= 0 ? '+' : ''}{hpi.national.fiveYearChange.toFixed(0)}%
+                        </span>
+                      )}
+                    </p>
                   </div>
                 )}
               </div>
@@ -604,6 +812,50 @@ function MarketPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Metro Ranking Chart */}
+                  <div className="mt-4 pt-4 border-t">
+                    <p className="text-sm font-medium mb-3">Metro YoY Growth Ranking</p>
+                    <div className="h-[120px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={getMetroComparison(hpi)}
+                          layout="vertical"
+                          margin={{ left: 80, right: 40 }}
+                        >
+                          <XAxis
+                            type="number"
+                            tickFormatter={(v) => `${v}%`}
+                            tick={{ fontSize: 11 }}
+                            domain={['dataMin - 1', 'dataMax + 1']}
+                          />
+                          <YAxis
+                            type="category"
+                            dataKey="name"
+                            tick={{ fontSize: 11 }}
+                            width={75}
+                          />
+                          <Tooltip
+                            formatter={(value: number | undefined) => value !== undefined ? [`${value.toFixed(1)}%`, 'YoY Change'] : ['', 'YoY Change']}
+                            contentStyle={{
+                              backgroundColor: 'hsl(var(--background))',
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                            }}
+                          />
+                          <Bar dataKey="change" radius={[0, 4, 4, 0]}>
+                            {getMetroComparison(hpi).map((entry, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={entry.change >= 0 ? 'hsl(var(--chart-1))' : 'hsl(var(--destructive))'}
+                              />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
                 </>
               )}
             </>
@@ -632,7 +884,7 @@ function MarketPage() {
               <Skeleton className="h-20" />
             </div>
           ) : indicators ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
               <div className="p-4 rounded-lg border">
                 <p className="text-sm text-muted-foreground">Federal Funds Rate</p>
                 <p className="text-2xl font-bold">{indicators.fedFundsRate.current.toFixed(2)}%</p>
@@ -659,6 +911,15 @@ function MarketPage() {
                   As of {indicators.unemployment.asOf}
                 </p>
               </div>
+              {indicators.housingStarts && (
+                <div className="p-4 rounded-lg border">
+                  <p className="text-sm text-muted-foreground">Housing Starts</p>
+                  <p className="text-2xl font-bold">{indicators.housingStarts.value.toLocaleString()}K</p>
+                  <p className="text-xs text-muted-foreground">
+                    MoM: {indicators.housingStarts.monthOverMonth >= 0 ? '+' : ''}{indicators.housingStarts.monthOverMonth.toFixed(1)}%
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-muted-foreground">
