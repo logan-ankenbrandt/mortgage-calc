@@ -1,0 +1,408 @@
+{
+  "version": "2024.1",
+  "lastUpdated": "2024-01-15",
+  "source": "Texas Comptroller of Public Accounts",
+  "note": "Rates are approximate total rates including county, school, and special districts. Actual rates may vary by specific location within county.",
+  "counties": {
+    "harris": {
+      "countyId": "harris",
+      "name": "Harris County",
+      "totalRate": 2.03,
+      "countyRate": 0.391,
+      "schoolRate": 1.04,
+      "hospitalRate": 0.17,
+      "otherSpecialDistricts": 0.429,
+      "lastUpdated": "2024-01-01"
+    },
+    "dallas": {
+      "countyId": "dallas",
+      "name": "Dallas County",
+      "totalRate": 1.93,
+      "countyRate": 0.24,
+      "schoolRate": 1.18,
+      "hospitalRate": 0.28,
+      "otherSpecialDistricts": 0.23,
+      "lastUpdated": "2024-01-01"
+    },
+    "tarrant": {
+      "countyId": "tarrant",
+      "name": "Tarrant County",
+      "totalRate": 2.19,
+      "countyRate": 0.234,
+      "schoolRate": 1.38,
+      "hospitalRate": 0.22,
+      "otherSpecialDistricts": 0.356,
+      "lastUpdated": "2024-01-01"
+    },
+    "bexar": {
+      "countyId": "bexar",
+      "name": "Bexar County",
+      "totalRate": 2.23,
+      "countyRate": 0.301,
+      "schoolRate": 1.31,
+      "hospitalRate": 0.28,
+      "otherSpecialDistricts": 0.339,
+      "lastUpdated": "2024-01-01"
+    },
+    "travis": {
+      "countyId": "travis",
+      "name": "Travis County",
+      "totalRate": 1.82,
+      "countyRate": 0.36,
+      "schoolRate": 0.97,
+      "hospitalRate": 0.11,
+      "otherSpecialDistricts": 0.38,
+      "lastUpdated": "2024-01-01"
+    },
+    "collin": {
+      "countyId": "collin",
+      "name": "Collin County",
+      "totalRate": 1.81,
+      "countyRate": 0.15,
+      "schoolRate": 1.24,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.42,
+      "lastUpdated": "2024-01-01"
+    },
+    "denton": {
+      "countyId": "denton",
+      "name": "Denton County",
+      "totalRate": 1.87,
+      "countyRate": 0.21,
+      "schoolRate": 1.21,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.45,
+      "lastUpdated": "2024-01-01"
+    },
+    "fort_bend": {
+      "countyId": "fort_bend",
+      "name": "Fort Bend County",
+      "totalRate": 2.26,
+      "countyRate": 0.44,
+      "schoolRate": 1.23,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.59,
+      "lastUpdated": "2024-01-01"
+    },
+    "williamson": {
+      "countyId": "williamson",
+      "name": "Williamson County",
+      "totalRate": 1.98,
+      "countyRate": 0.39,
+      "schoolRate": 1.09,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.50,
+      "lastUpdated": "2024-01-01"
+    },
+    "montgomery": {
+      "countyId": "montgomery",
+      "name": "Montgomery County",
+      "totalRate": 2.05,
+      "countyRate": 0.43,
+      "schoolRate": 1.17,
+      "hospitalRate": 0.07,
+      "otherSpecialDistricts": 0.38,
+      "lastUpdated": "2024-01-01"
+    },
+    "el_paso": {
+      "countyId": "el_paso",
+      "name": "El Paso County",
+      "totalRate": 2.47,
+      "countyRate": 0.42,
+      "schoolRate": 1.34,
+      "hospitalRate": 0.19,
+      "otherSpecialDistricts": 0.52,
+      "lastUpdated": "2024-01-01"
+    },
+    "hidalgo": {
+      "countyId": "hidalgo",
+      "name": "Hidalgo County",
+      "totalRate": 2.31,
+      "countyRate": 0.44,
+      "schoolRate": 1.26,
+      "hospitalRate": 0.13,
+      "otherSpecialDistricts": 0.48,
+      "lastUpdated": "2024-01-01"
+    },
+    "nueces": {
+      "countyId": "nueces",
+      "name": "Nueces County",
+      "totalRate": 2.18,
+      "countyRate": 0.32,
+      "schoolRate": 1.23,
+      "hospitalRate": 0.18,
+      "otherSpecialDistricts": 0.45,
+      "lastUpdated": "2024-01-01"
+    },
+    "cameron": {
+      "countyId": "cameron",
+      "name": "Cameron County",
+      "totalRate": 2.29,
+      "countyRate": 0.40,
+      "schoolRate": 1.31,
+      "hospitalRate": 0.14,
+      "otherSpecialDistricts": 0.44,
+      "lastUpdated": "2024-01-01"
+    },
+    "brazoria": {
+      "countyId": "brazoria",
+      "name": "Brazoria County",
+      "totalRate": 2.12,
+      "countyRate": 0.42,
+      "schoolRate": 1.22,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.48,
+      "lastUpdated": "2024-01-01"
+    },
+    "galveston": {
+      "countyId": "galveston",
+      "name": "Galveston County",
+      "totalRate": 2.08,
+      "countyRate": 0.52,
+      "schoolRate": 1.14,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.42,
+      "lastUpdated": "2024-01-01"
+    },
+    "lubbock": {
+      "countyId": "lubbock",
+      "name": "Lubbock County",
+      "totalRate": 2.41,
+      "countyRate": 0.33,
+      "schoolRate": 1.42,
+      "hospitalRate": 0.18,
+      "otherSpecialDistricts": 0.48,
+      "lastUpdated": "2024-01-01"
+    },
+    "webb": {
+      "countyId": "webb",
+      "name": "Webb County",
+      "totalRate": 2.36,
+      "countyRate": 0.38,
+      "schoolRate": 1.35,
+      "hospitalRate": 0.17,
+      "otherSpecialDistricts": 0.46,
+      "lastUpdated": "2024-01-01"
+    },
+    "mclennan": {
+      "countyId": "mclennan",
+      "name": "McLennan County",
+      "totalRate": 2.27,
+      "countyRate": 0.39,
+      "schoolRate": 1.28,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.60,
+      "lastUpdated": "2024-01-01"
+    },
+    "bell": {
+      "countyId": "bell",
+      "name": "Bell County",
+      "totalRate": 2.33,
+      "countyRate": 0.45,
+      "schoolRate": 1.32,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.56,
+      "lastUpdated": "2024-01-01"
+    },
+    "hays": {
+      "countyId": "hays",
+      "name": "Hays County",
+      "totalRate": 1.91,
+      "countyRate": 0.38,
+      "schoolRate": 1.08,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.45,
+      "lastUpdated": "2024-01-01"
+    },
+    "smith": {
+      "countyId": "smith",
+      "name": "Smith County",
+      "totalRate": 2.15,
+      "countyRate": 0.36,
+      "schoolRate": 1.26,
+      "hospitalRate": 0.11,
+      "otherSpecialDistricts": 0.42,
+      "lastUpdated": "2024-01-01"
+    },
+    "brazos": {
+      "countyId": "brazos",
+      "name": "Brazos County",
+      "totalRate": 2.28,
+      "countyRate": 0.41,
+      "schoolRate": 1.29,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.58,
+      "lastUpdated": "2024-01-01"
+    },
+    "johnson": {
+      "countyId": "johnson",
+      "name": "Johnson County",
+      "totalRate": 2.11,
+      "countyRate": 0.26,
+      "schoolRate": 1.35,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.50,
+      "lastUpdated": "2024-01-01"
+    },
+    "ellis": {
+      "countyId": "ellis",
+      "name": "Ellis County",
+      "totalRate": 2.24,
+      "countyRate": 0.29,
+      "schoolRate": 1.42,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.53,
+      "lastUpdated": "2024-01-01"
+    },
+    "midland": {
+      "countyId": "midland",
+      "name": "Midland County",
+      "totalRate": 2.08,
+      "countyRate": 0.31,
+      "schoolRate": 1.19,
+      "hospitalRate": 0.18,
+      "otherSpecialDistricts": 0.40,
+      "lastUpdated": "2024-01-01"
+    },
+    "ector": {
+      "countyId": "ector",
+      "name": "Ector County",
+      "totalRate": 2.14,
+      "countyRate": 0.35,
+      "schoolRate": 1.24,
+      "hospitalRate": 0.14,
+      "otherSpecialDistricts": 0.41,
+      "lastUpdated": "2024-01-01"
+    },
+    "kaufman": {
+      "countyId": "kaufman",
+      "name": "Kaufman County",
+      "totalRate": 2.17,
+      "countyRate": 0.37,
+      "schoolRate": 1.31,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.49,
+      "lastUpdated": "2024-01-01"
+    },
+    "rockwall": {
+      "countyId": "rockwall",
+      "name": "Rockwall County",
+      "totalRate": 1.89,
+      "countyRate": 0.19,
+      "schoolRate": 1.27,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.43,
+      "lastUpdated": "2024-01-01"
+    },
+    "guadalupe": {
+      "countyId": "guadalupe",
+      "name": "Guadalupe County",
+      "totalRate": 2.06,
+      "countyRate": 0.34,
+      "schoolRate": 1.21,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.51,
+      "lastUpdated": "2024-01-01"
+    },
+    "comal": {
+      "countyId": "comal",
+      "name": "Comal County",
+      "totalRate": 1.89,
+      "countyRate": 0.32,
+      "schoolRate": 1.12,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.45,
+      "lastUpdated": "2024-01-01"
+    },
+    "parker": {
+      "countyId": "parker",
+      "name": "Parker County",
+      "totalRate": 2.01,
+      "countyRate": 0.28,
+      "schoolRate": 1.29,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.44,
+      "lastUpdated": "2024-01-01"
+    },
+    "wichita": {
+      "countyId": "wichita",
+      "name": "Wichita County",
+      "totalRate": 2.34,
+      "countyRate": 0.42,
+      "schoolRate": 1.35,
+      "hospitalRate": 0.14,
+      "otherSpecialDistricts": 0.43,
+      "lastUpdated": "2024-01-01"
+    },
+    "taylor": {
+      "countyId": "taylor",
+      "name": "Taylor County",
+      "totalRate": 2.21,
+      "countyRate": 0.38,
+      "schoolRate": 1.28,
+      "hospitalRate": 0.12,
+      "otherSpecialDistricts": 0.43,
+      "lastUpdated": "2024-01-01"
+    },
+    "tom_green": {
+      "countyId": "tom_green",
+      "name": "Tom Green County",
+      "totalRate": 2.19,
+      "countyRate": 0.40,
+      "schoolRate": 1.25,
+      "hospitalRate": 0.11,
+      "otherSpecialDistricts": 0.43,
+      "lastUpdated": "2024-01-01"
+    },
+    "potter": {
+      "countyId": "potter",
+      "name": "Potter County",
+      "totalRate": 2.42,
+      "countyRate": 0.44,
+      "schoolRate": 1.41,
+      "hospitalRate": 0.15,
+      "otherSpecialDistricts": 0.42,
+      "lastUpdated": "2024-01-01"
+    },
+    "randall": {
+      "countyId": "randall",
+      "name": "Randall County",
+      "totalRate": 2.18,
+      "countyRate": 0.32,
+      "schoolRate": 1.34,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.52,
+      "lastUpdated": "2024-01-01"
+    },
+    "jefferson": {
+      "countyId": "jefferson",
+      "name": "Jefferson County",
+      "totalRate": 2.31,
+      "countyRate": 0.48,
+      "schoolRate": 1.27,
+      "hospitalRate": 0.14,
+      "otherSpecialDistricts": 0.42,
+      "lastUpdated": "2024-01-01"
+    },
+    "orange": {
+      "countyId": "orange",
+      "name": "Orange County",
+      "totalRate": 2.09,
+      "countyRate": 0.41,
+      "schoolRate": 1.19,
+      "hospitalRate": null,
+      "otherSpecialDistricts": 0.49,
+      "lastUpdated": "2024-01-01"
+    },
+    "victoria": {
+      "countyId": "victoria",
+      "name": "Victoria County",
+      "totalRate": 2.24,
+      "countyRate": 0.39,
+      "schoolRate": 1.29,
+      "hospitalRate": 0.13,
+      "otherSpecialDistricts": 0.43,
+      "lastUpdated": "2024-01-01"
+    }
+  }
+}
