@@ -16,12 +16,12 @@ const defaultExemptions: TaxExemptions = {
 
 const initialState: CalculatorState = {
   income: {
-    person1: 4100,
-    person2Base: 5900,
+    person1: 0,
+    person2Base: 0,
     person2Variable: 0,
     variableMode: 'simple',
   },
-  expenses: 3500,
+  expenses: 0,
   property: {
     price: 275000,
     currentRate: 6.3,
@@ -33,7 +33,7 @@ const initialState: CalculatorState = {
     exemptions: defaultExemptions,
   },
   savings: {
-    current: 62300,
+    current: 0,
     monthly: 0,
     manualOverride: false,
   },
