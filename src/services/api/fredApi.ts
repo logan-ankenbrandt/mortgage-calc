@@ -1,9 +1,8 @@
 import type { FREDSeriesResponse, FREDObservation } from '@/types/market-data'
 
-// Use Vite proxy in development to avoid CORS issues
-const FRED_BASE_URL = import.meta.env.DEV
-  ? '/api/fred'
-  : 'https://api.stlouisfed.org/fred'
+// Use proxy in both dev and prod to avoid CORS issues
+// Dev: Vite proxy, Prod: Vercel serverless function
+const FRED_BASE_URL = '/api/fred'
 
 // Common FRED series IDs for mortgage/housing data
 export const FRED_SERIES = {
