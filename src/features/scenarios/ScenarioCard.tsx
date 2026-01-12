@@ -1,12 +1,14 @@
 import type { ScenarioResult } from '../../types'
 import { formatCurrency, formatPercent } from '../../utils/formatters'
+import { Star } from 'lucide-react'
 
 interface ScenarioCardProps {
   title: string
   scenario: ScenarioResult
+  isBest?: boolean
 }
 
-export function ScenarioCard({ title, scenario }: ScenarioCardProps) {
+export function ScenarioCard({ title, scenario, isBest = false }: ScenarioCardProps) {
   const statusStyles = {
     affordable: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
     'requires-variable': 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
@@ -20,8 +22,16 @@ export function ScenarioCard({ title, scenario }: ScenarioCardProps) {
   }
 
   return (
-    <div className="bg-card rounded-lg border border-border p-5 hover:shadow-sm transition-shadow">
-      <h3 className="font-medium text-foreground mb-4">{title}</h3>
+    <div className={`bg-card rounded-lg border p-5 hover:shadow-sm transition-shadow ${isBest ? 'border-primary ring-2 ring-primary/20' : 'border-border'}`}>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-medium text-foreground">{title}</h3>
+        {isBest && (
+          <span className="flex items-center gap-1 text-xs font-medium text-primary">
+            <Star className="h-3 w-3 fill-primary" />
+            Best
+          </span>
+        )}
+      </div>
 
       <div className="space-y-3">
         <div className="flex justify-between text-sm">

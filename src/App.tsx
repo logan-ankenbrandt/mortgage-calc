@@ -1,7 +1,19 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CalculatorProvider, useCalculatorContext } from './context/CalculatorContext'
+import { useCalculator } from './hooks/useCalculator'
 import { MarketDataProvider, useMortgageRates, useEconomicIndicators, useHomePriceIndex, useMarketNews } from './context/MarketDataContext'
 import { formatNewsDate } from './services/data/newsService'
+import { getRateHistory } from './services/data/mortgageRates'
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts'
 import { ThemeProvider } from './components/layout/theme-provider'
 import { AppShell } from './components/layout/app-shell'
 import { TooltipProvider } from './components/ui/tooltip'
@@ -22,6 +34,7 @@ import { formatCurrency, formatPercent } from './utils/formatters'
 // Dashboard with real data
 function Dashboard() {
   const { state } = useCalculatorContext()
+  const { computed } = useCalculator()
   const { rates, isLoading: ratesLoading } = useMortgageRates()
   const { indicators, isLoading: indicatorsLoading } = useEconomicIndicators()
 
@@ -31,6 +44,24 @@ function Dashboard() {
     : Math.max(0, totalIncome - state.expenses)
   const downPayment20 = state.property.price * 0.2
   const progressTo20 = (state.savings.current / downPayment20) * 100
+
+  // Find best scenario (lowest cost that's affordable)
+  const scenarios = [
+    { key: 'earlyCurrentRate', label: 'Early @ Current', ...computed.scenarios.earlyCurrentRate },
+    { key: 'delayedCurrentRate', label: 'Delayed @ Current', ...computed.scenarios.delayedCurrentRate },
+    { key: 'earlyAltRate', label: 'Early @ Alt', ...computed.scenarios.earlyAltRate },
+    { key: 'delayedAltRate', label: 'Delayed @ Alt', ...computed.scenarios.delayedAltRate },
+  ]
+  const affordableScenarios = scenarios.filter(s => s.affordabilityStatus === 'affordable')
+  // Always defined: either first affordable or first scenario (scenarios always has 4 elements)
+  const bestScenario = (affordableScenarios.length > 0
+    ? affordableScenarios.sort((a, b) => a.totalMonthlyHousing - b.totalMonthlyHousing)[0]
+    : scenarios[0])!
+
+  // Rate comparison
+  const userRate = state.property.currentRate
+  const marketRate = rates?.rate30Year ?? null
+  const rateVsMarket = marketRate !== null ? userRate - marketRate : null
 
   return (
     <div className="space-y-6">
@@ -137,13 +168,21 @@ function Dashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">Your Rate</CardTitle>
             <Percent className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatPercent(state.property.currentRate)}</div>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold">{formatPercent(state.property.currentRate)}</span>
+              {rateVsMarket !== null && (
+                <span className={`text-sm flex items-center gap-1 ${rateVsMarket < 0 ? 'text-green-600 dark:text-green-400' : rateVsMarket > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}>
+                  {rateVsMarket < 0 ? <TrendingDown className="h-3 w-3" /> : rateVsMarket > 0 ? <TrendingUp className="h-3 w-3" /> : null}
+                  {rateVsMarket !== 0 && `${rateVsMarket > 0 ? '+' : ''}${rateVsMarket.toFixed(2)}%`}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {state.property.loanTerm}-year term
+              {state.property.loanTerm}-year term{marketRate !== null && ` · Market: ${marketRate.toFixed(2)}%`}
             </p>
           </CardContent>
         </Card>
@@ -205,6 +244,30 @@ function Dashboard() {
         </Card>
       )}
 
+      {/* Best Scenario Summary */}
+      <Card className={bestScenario.affordabilityStatus === 'affordable' ? 'border-green-500/30 bg-green-500/5' : bestScenario.affordabilityStatus === 'requires-variable' ? 'border-amber-500/30 bg-amber-500/5' : ''}>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Best Scenario</CardTitle>
+            <Badge variant={bestScenario.affordabilityStatus === 'affordable' ? 'success' : bestScenario.affordabilityStatus === 'requires-variable' ? 'warning' : 'destructive'}>
+              {bestScenario.affordabilityStatus === 'affordable' ? 'Affordable' : bestScenario.affordabilityStatus === 'requires-variable' ? 'Needs Variable' : 'Not Affordable'}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">{bestScenario.label}</p>
+              <p className="text-2xl font-bold">{formatCurrency(bestScenario.totalMonthlyHousing)}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Down Payment</p>
+              <p className="font-semibold">{formatCurrency(bestScenario.downPayment)}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <p className="text-sm text-muted-foreground">
         Navigate to specific sections using the sidebar to configure your mortgage calculations.
       </p>
@@ -218,11 +281,62 @@ function MarketPage() {
   const { hpi, isLoading: hpiLoading, refresh: refreshHPI } = useHomePriceIndex()
   const { news, isLoading: newsLoading, refresh: refreshNews } = useMarketNews()
 
+  const [newsCategory, setNewsCategory] = useState<'all' | 'rates' | 'fed' | 'market' | 'general'>('all')
+  const [rateHistory, setRateHistory] = useState<{ date: string; rate30: number; rate15: number }[]>([])
+  const [rateHistoryLoading, setRateHistoryLoading] = useState(true)
+
+  // Fetch rate history on mount
+  useEffect(() => {
+    let mounted = true
+    async function fetchHistory() {
+      setRateHistoryLoading(true)
+      try {
+        const history = await getRateHistory(12)
+        if (mounted) setRateHistory(history)
+      } catch (e) {
+        console.error('Failed to fetch rate history:', e)
+      } finally {
+        if (mounted) setRateHistoryLoading(false)
+      }
+    }
+    fetchHistory()
+    return () => { mounted = false }
+  }, [])
+
   const isAnyLoading = ratesLoading || indicatorsLoading || hpiLoading || newsLoading
 
   const handleRefresh = async () => {
     await Promise.all([refreshRates(), refreshIndicators(), refreshHPI(), refreshNews()])
+    // Also refresh rate history
+    setRateHistoryLoading(true)
+    try {
+      const history = await getRateHistory(12)
+      setRateHistory(history)
+    } finally {
+      setRateHistoryLoading(false)
+    }
   }
+
+  // Filter news by category
+  const filteredNews = news?.items.filter(item =>
+    newsCategory === 'all' ? true : item.category === newsCategory
+  ) ?? []
+
+  // Count items per category
+  const categoryCount = {
+    all: news?.items.length ?? 0,
+    rates: news?.items.filter(i => i.category === 'rates').length ?? 0,
+    fed: news?.items.filter(i => i.category === 'fed').length ?? 0,
+    market: news?.items.filter(i => i.category === 'market').length ?? 0,
+    general: news?.items.filter(i => i.category === 'general').length ?? 0,
+  }
+
+  // Format chart data
+  const chartData = rateHistory.map(d => ({
+    date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+    '30-Year': d.rate30,
+    '15-Year': d.rate15,
+  }))
 
   return (
     <div className="space-y-6">
@@ -298,6 +412,73 @@ function MarketPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Rate History Chart */}
+      {(rateHistory.length > 0 || rateHistoryLoading) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>12-Month Rate Trend</CardTitle>
+            <CardDescription>
+              Historical mortgage rate movement
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {rateHistoryLoading ? (
+              <Skeleton className="h-[250px]" />
+            ) : chartData.length > 0 ? (
+              <div className="h-[250px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      dataKey="date"
+                      className="text-xs"
+                      tick={{ fontSize: 11 }}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis
+                      className="text-xs"
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(v) => `${v}%`}
+                      domain={['dataMin - 0.5', 'dataMax + 0.5']}
+                    />
+                    <Tooltip
+                      formatter={(value: number | undefined) => value !== undefined ? [`${value.toFixed(2)}%`, ''] : ['', '']}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                      }}
+                    />
+                    <Legend />
+                    <Area
+                      type="monotone"
+                      dataKey="30-Year"
+                      stroke="hsl(var(--chart-1))"
+                      fill="hsl(var(--chart-1))"
+                      fillOpacity={0.3}
+                      strokeWidth={2}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="15-Year"
+                      stroke="hsl(var(--chart-2))"
+                      fill="hsl(var(--chart-2))"
+                      fillOpacity={0.2}
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-8">
+                Rate history unavailable. Configure FRED API key for historical data.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Home Price Index */}
       <Card>
@@ -488,15 +669,37 @@ function MarketPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Category filter tabs */}
+          {news && news.items.length > 0 && (
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {(['all', 'rates', 'fed', 'market', 'general'] as const).map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setNewsCategory(cat)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                    newsCategory === cat
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  {cat === 'all' ? 'All' : cat === 'fed' ? 'Fed' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  {categoryCount[cat] > 0 && (
+                    <span className="ml-1 opacity-70">({categoryCount[cat]})</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
           {newsLoading ? (
             <div className="space-y-4">
               <Skeleton className="h-20" />
               <Skeleton className="h-20" />
               <Skeleton className="h-20" />
             </div>
-          ) : news && news.items.length > 0 ? (
+          ) : filteredNews.length > 0 ? (
             <div className="space-y-4">
-              {news.items.slice(0, 10).map((item) => (
+              {filteredNews.slice(0, 10).map((item) => (
                 <a
                   key={item.id}
                   href={item.link}
@@ -528,12 +731,16 @@ function MarketPage() {
                   </div>
                 </a>
               ))}
-              {news.items.length > 10 && (
+              {filteredNews.length > 10 && (
                 <p className="text-xs text-muted-foreground text-center pt-2">
-                  Showing 10 of {news.items.length} articles
+                  Showing 10 of {filteredNews.length} articles
                 </p>
               )}
             </div>
+          ) : news && news.items.length > 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              No articles in this category.
+            </p>
           ) : (
             <p className="text-muted-foreground text-center py-8">
               No news articles available. News feeds will be fetched automatically when a CORS proxy is configured.
