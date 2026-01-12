@@ -1,24 +1,12 @@
 import { cacheManager, CACHE_KEYS } from '@/services/cache/cacheManager'
 import type { NewsItem, MarketNewsFeed } from '@/types/market-data'
 
-// RSS feed sources - use Vite proxy in development to avoid CORS
-const RSS_FEEDS = import.meta.env.DEV
-  ? {
-      mortgageNewsDaily: '/api/rss/mortgagenews',
-      housingWire: '/api/rss/housingwire',
-      calculateRisk: '/api/rss/calculatedrisk',
-    }
-  : {
-      mortgageNewsDaily: 'https://www.mortgagenewsdaily.com/mortgage-rates-feed',
-      housingWire: 'https://www.housingwire.com/feed/',
-      calculateRisk: 'https://www.calculatedriskblog.com/feeds/posts/default?alt=rss',
-    }
-
-// Whether we're using Vite proxy (direct fetch) or need CORS proxy wrapper
-const USE_VITE_PROXY = import.meta.env.DEV
-
-// CORS proxy for fetching RSS feeds (production only)
-const CORS_PROXY = import.meta.env.VITE_CORS_PROXY || 'https://api.allorigins.win/get?url='
+// RSS feed sources - same paths work in both dev (Vite proxy) and production (Vercel serverless)
+const RSS_FEEDS = {
+  mortgageNewsDaily: '/api/rss/mortgagenews',
+  housingWire: '/api/rss/housingwire',
+  calculateRisk: '/api/rss/calculatedrisk',
+}
 
 /**
  * Parse RSS XML into news items
@@ -101,34 +89,15 @@ function categorizeNewsItem(title: string, summary: string): NewsItem['category'
 }
 
 /**
- * Fetch a single RSS feed (uses Vite proxy in dev, CORS proxy in prod)
+ * Fetch a single RSS feed (Vite proxy in dev, Vercel serverless in prod)
  */
 async function fetchRSSFeed(url: string, source: string): Promise<NewsItem[]> {
   try {
-    let xml: string
-
-    if (USE_VITE_PROXY) {
-      // In development: direct fetch through Vite proxy
-      const response = await fetch(url)
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
-      }
-      xml = await response.text()
-    } else {
-      // In production: use CORS proxy wrapper
-      const proxyUrl = `${CORS_PROXY}${encodeURIComponent(url)}`
-      const response = await fetch(proxyUrl)
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
-      }
-      const data = await response.json()
-      // allorigins returns the content in a 'contents' field
-      xml = data.contents || data
-      if (typeof xml !== 'string') {
-        throw new Error('Invalid response format')
-      }
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
     }
-
+    const xml = await response.text()
     return parseRSS(xml, source)
   } catch (error) {
     console.warn(`Failed to fetch RSS feed from ${source}:`, error)
