@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import { CalculatorProvider, useCalculatorContext } from './context/CalculatorContext'
 import { useCalculator } from './hooks/useCalculator'
 import { MarketDataProvider, useMortgageRates, useEconomicIndicators, useHomePriceIndex, useMarketNews } from './context/MarketDataContext'
@@ -1113,6 +1114,7 @@ export default function App() {
             >
               {renderSection()}
             </AppShell>
+            <Analytics />
           </CalculatorProvider>
         </MarketDataProvider>
       </TooltipProvider>
